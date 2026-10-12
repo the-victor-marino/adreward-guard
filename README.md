@@ -1,30 +1,28 @@
 # AdReward Guard
 
-**Mobile game rewarded-ad transaction integrity testing.**
+**Automated QA for rewarded-ad integrity in mobile games.**
 
-## Why it matters
+Rewarded ads should credit the promised amount **once per verified transaction**. Duplicate callbacks, cancelled ads and invalid reward amounts are common risk scenarios worth testing.
 
-Rewarded ads must grant the correct reward exactly once—even when callbacks are duplicated, messages arrive late, or connectivity fails.
+## Current MVP (simulated)
 
-## MVP scope
+A small in-memory reward ledger and deterministic Pytest suite cover completed ads, duplicate callbacks, cancellation, failure and invalid amounts. This is an **offline prototype**, not a production integration with AdMob/Unity Ads. Production verification would require server-side validation, durable storage and atomic transaction handling.
 
-An offline, deterministic simulated ad-provider callback workflow and a minimal reward ledger. No live ads or real financial transactions are required.
+## Run
 
-## Test strategy
-
-This project documents assumptions, positive and negative scenarios, reproducible evidence, and explicit release criteria. The first implementation will be developed on a feature branch and reviewed before merging.
-
-## Status
-
-**In development — initial scaffold.** No passing-test or real-device claims until verified.
+```bash
+python -m pip install -e ".[test]"
+python -m pytest -q
+```
 
 ## Roadmap
 
-1. Minimal working implementation
-2. Automated positive, boundary, and adversarial tests
-3. CI reports and reproducible failures
-4. Portfolio-quality documentation and demos
+1. Persist transactions with SQLite and enforce uniqueness in storage.
+2. Model pending/completed/failed transaction states.
+3. Simulate delayed, reordered and replayed callbacks.
+4. Add FastAPI endpoints, tests and structured defect reports.
+5. Verify a sandbox/mock SDK integration.
 
-## License
+## Evidence
 
-License to be chosen before distribution.
+CI runs the deterministic tests on every PR; real ad-network claims are out of scope for the current MVP.
