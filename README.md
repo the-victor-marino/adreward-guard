@@ -1,30 +1,50 @@
 # AdReward Guard
 
-**Mobile game rewarded-ad transaction integrity testing.**
+[![QA tests](https://github.com/the-victor-marino/adreward-guard/actions/workflows/tests.yml/badge.svg)](https://github.com/the-victor-marino/adreward-guard/actions/workflows/tests.yml)
 
-## Why it matters
+**Prevent duplicate, missing, and invalid mobile rewarded-ad grants.**
 
-Rewarded ads must grant the correct reward exactly once—even when callbacks are duplicated, messages arrive late, or connectivity fails.
+## Problem
 
-## MVP scope
+A completed rewarded ad may generate retries or duplicate callbacks. A good game economy must credit an earned reward **exactly once**, without granting rewards to cancelled ads.
 
-An offline, deterministic simulated ad-provider callback workflow and a minimal reward ledger. No live ads or real financial transactions are required.
+## Implemented QA sandbox
 
-## Test strategy
+- Deterministic in-memory event-state tests
+- **SQLite persistent** reward transactions and player balances
+- Database transaction + unique transaction ID prevents concurrent double credit
+- Invalid/unauthorized callback and replay tests
+- FastAPI mock callback endpoint with Swagger at `/docs`
+- Pytest, GitHub Actions and risk-based test strategy
 
-This project documents assumptions, positive and negative scenarios, reproducible evidence, and explicit release criteria. The first implementation will be developed on a feature branch and reviewed before merging.
+The HTTP demo secret is **not** a replacement for cryptographic SSV verification and this does not connect to a live advertisement network.
 
-## Status
+## Run
 
-**In development — initial scaffold.** No passing-test or real-device claims until verified.
+```bash
+python -m pip install -e ".[test]"
+python -m pytest -q
+ADREWARD_DB=demo.sqlite3 uvicorn adreward_guard.api:app --reload
+```
 
-## Roadmap
+On Windows PowerShell:
+```powershell
+$env:ADREWARD_DB="demo.sqlite3"
+python -m uvicorn adreward_guard.api:app --reload
+```
 
-1. Minimal working implementation
-2. Automated positive, boundary, and adversarial tests
-3. CI reports and reproducible failures
-4. Portfolio-quality documentation and demos
+Try the POST `/callbacks` endpoint in Swagger UI with header `x-demo-secret: local-demo-secret` and body:
 
-## License
+```json
+{"transaction_id":"tx-100","player_id":"player-1","amount":100,"event":"completed"}
+```
 
-License to be chosen before distribution.
+Send it twice: first call grants 100; second call must grant 0 additional coins.
+
+## QA evidence
+
+See [test strategy](docs/TEST_STRATEGY.md) for failure modes and test oracles. Reproducible defects are more valuable than a passing green badge alone.
+
+## Important scope limits
+
+A real AdMob integration requires canonical callback processing, ECDSA signature verification, key rotation and replay protection. This project exercises the **transaction logic using mock verification only**, not real advertising payouts.
